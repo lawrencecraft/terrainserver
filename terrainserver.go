@@ -15,10 +15,23 @@ import (
 func main() {
 	port := flag.Int("p", 8822, "Port to listen for connections")
 	nrkey := flag.String("nrkey", "", "NewRelic license key")
+	loglevel := flag.String("loglevel", "Info", "Log level - values are (Debug|Info|Warn|Fatal)")
 	flag.Parse()
-	log.SetLevel(log.InfoLevel)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	log.Info("Setting max procs to", runtime.NumCPU())
+
+	switch *loglevel {
+	case "Debug":
+		log.SetLevel(log.DebugLevel)
+	case "Info":
+		log.SetLevel(log.InfoLevel)
+	case "Warn":
+		log.SetLevel(log.WarnLevel)
+	case "Fatal":
+		log.SetLevel(log.FatalLevel)
+	default:
+		log.Fatal("Unknown level: ", *loglevel)
+	}
 
 	g := generator.NewDiamondSquareGenerator(1.0, 1025, 1025)
 
