@@ -5,16 +5,15 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
-	"github.com/jingweno/negroni-gorelic"
 	"github.com/lawrencecraft/terrainmodel/drawer"
 	"github.com/lawrencecraft/terrainmodel/generator"
+	"github.com/meatballhat/negroni-logrus"
 	"net/http"
 	"runtime"
 )
 
 func main() {
 	port := flag.Int("p", 8822, "Port to listen for connections")
-	nrkey := flag.String("nrkey", "", "NewRelic license key")
 	loglevel := flag.String("loglevel", "Info", "Log level - values are (Debug|Info|Warn|Fatal)")
 	flag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -44,11 +43,7 @@ func main() {
 	})
 
 	n := negroni.New()
-
-	if *nrkey != "" {
-		log.Info("Using NewRelic")
-		n.Use(negronigorelic.New(*nrkey, "terrainworker", true))
-	}
+	n.Use(negronilogrus.NewMiddleware())
 
 	n.UseHandler(r)
 
