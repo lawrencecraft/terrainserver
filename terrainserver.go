@@ -5,11 +5,13 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
+	"github.com/gorilla/mux"
 	"github.com/lawrencecraft/terrainmodel/drawer"
 	"github.com/lawrencecraft/terrainmodel/generator"
 	"github.com/meatballhat/negroni-logrus"
 	"net/http"
 	"runtime"
+	"strconv"
 )
 
 func main() {
@@ -32,17 +34,28 @@ func main() {
 		log.Fatal("Unknown level: ", *loglevel)
 	}
 
-	g := generator.NewDiamondSquareGenerator(1.0, 1025, 1025)
+	r := mux.NewRouter()
 
-	r := http.NewServeMux()
-	r.HandleFunc("/map", func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc("/map/{x:[0-9]+}/{y:[0-9]+}", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
+
+		vars := mux.Vars(req)
+		x, errx := strconv.ParseInt(vars["x"], 10, 0)
+		y, erry := strconv.ParseInt(vars["y"], 10, 0)
+
+		if errx != nil || erry != nil || x > 1025 || y > 1025 {
+			w.Write([]byte("argument error"))
+			return
+		}
+
+		g := generator.NewDiamondSquareGenerator(1.0, int(x), int(y))
 		d := drawer.NewPngDrawer(w)
 		t, _ := g.Generate()
 		d.Draw(t)
 	})
 
 	n := negroni.New()
+
 	n.Use(negronilogrus.NewMiddleware())
 
 	n.UseHandler(r)
